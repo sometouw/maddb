@@ -9,6 +9,8 @@
 	Not fit for any purpose, Run at own risk
 
 	v1 March 2017, Nathan Evans, nevans@showrunint.com
+	v1.2 April 2017, Nathan Evans, nevans@showrunint.compile
+		Added support for server 2000 ADI dns stores
 
 	This is free and unencumbered software released into the public domain.
 
@@ -51,7 +53,12 @@ param (
 	[switch]$backup = $false,
 	[switch]$restore = $false,
 	[switch]$moveForest = $false,
-	[string]$holding = "DnsHolding"
+	[switch]$server2k = $false,
+	[string]$holding = "DnsHolding",
+	[string]$DomainPath = "CN=MicrosoftDNS,DC=DomainDnsZones,$domain",
+	[string]$ForestPath = "CN=MicrosoftDNS,DC=ForestDnsZones,$domain",
+	[string]$Server2kPath = "CN=MicrosoftDNS,CN=system,$domain",
+	[string]$Filter = 'ObjectClass -eq "DnsZone"'
 )
 
 ## Imports
@@ -60,23 +67,33 @@ import-module activedirectory
 
 ## Main
 if($backup){
-	New-ADObject -name $holding -type "Container" -path "CN=MicrosoftDNS,DC=DomainDnsZones,$domain"
-	Get-ADObject -filter 'ObjectClass -eq "DnsZone"' -searchbase "CN=MicrosoftDNS,DC=DomainDnsZones,$domain" | Move-ADObject -targetpath "CN=$holding,CN=MicrosoftDNS,DC=DomainDnsZones,$domain"
+	New-ADObject -name $holding -type "Container" -path $DomainPath
+	Get-ADObject -filter $Filter -searchbase $DomainPath | Move-ADObject -targetpath "CN=$holding,$DomainPath"
 	if($moveForest){
-		New-ADObject -name $holding -type "Container" -path "CN=MicrosoftDNS,DC=ForestDnsZones,$domain"
-		Get-ADObject -filter 'ObjectClass -eq "DnsZone"' -searchbase "CN=MicrosoftDNS,DC=ForestDnsZones,$domain" | Move-ADObject -targetpath "CN=$holding,CN=MicrosoftDNS,DC=ForestDnsZones,$domain"
+		New-ADObject -name $holding -type "Container" -path $ForestPath
+		Get-ADObject -filter $Filter -searchbase $ForestPath | Move-ADObject -targetpath "CN=$holding,$ForestPath"
+	}
+	if($server2k){
+		New-ADObject -name $holding -type "Container" -path $Server2kPath
+		Get-ADObject -filter $Filter -searchbase $Server2kPath | Move-ADObject -targetpath "CN=$holding,$Server2kPath"
 	}
 }
 ElseIf($restore){
-	Get-ADObject -filter 'ObjectClass -eq "DnsZone"' -searchbase "CN=$holding,CN=MicrosoftDNS,DC=DomainDnsZones,$domain" | Move-ADObject -targetpath "CN=MicrosoftDNS,DC=DomainDnsZones,$domain"
+	Get-ADObject -filter $Filter -searchbase "CN=$holding,$DomainPath" | Move-ADObject -targetpath $DomainPath
 	if($moveForest){
-		Get-ADObject -filter 'ObjectClass -eq "DnsZone"' -searchbase "CN=$holding,CN=MicrosoftDNS,DC=ForestDnsZones,$domain" | Move-ADObject -targetpath "CN=MicrosoftDNS,DC=ForestDnsZones,$domain"
+		Get-ADObject -filter $Filter -searchbase "CN=$holding,$ForestPath" | Move-ADObject -targetpath $ForestPath
+	}
+	if($server2k){
+		Get-ADObject -filter $Filter -searchbase "CN=$holding,$Server2kPath" | Move-ADObject -targetpath $Server2kPath
 	}
 }
 Else{
-	Get-ADObject -filter 'ObjectClass -eq "DnsZone"' -searchbase "CN=MicrosoftDNS,DC=DomainDnsZones,$domain"
+	Get-ADObject -filter $Filter -searchbase $DomainPath
 	if($moveForest){
-		Get-ADObject -filter 'ObjectClass -eq "DnsZone"' -searchbase "CN=MicrosoftDNS,DC=ForestDnsZones,$domain"
+		Get-ADObject -filter $Filter -searchbase $ForestPath
+	}
+	if($server2k){
+		Get-ADObject -filter $Filter -searchbase $Server2kPath
 	}
 }
 ## End script
