@@ -9,7 +9,7 @@
 	Not fit for any purpose, Run at own risk
 
 	v1 March 2017, Nathan Evans, nevans@showrunint.com
-	v1.2 April 2017, Nathan Evans, nevans@showrunint.compile
+	v1.2 April 2017, Nathan Evans, nevans@showrunint.com
 		Added support for server 2000 ADI dns stores
 
 	This is free and unencumbered software released into the public domain.
